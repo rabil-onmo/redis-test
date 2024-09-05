@@ -54,11 +54,20 @@ var generateUser = function () { return ({
     id: faker_1.faker.string.uuid(),
     name: faker_1.faker.internet.userName(),
     email: faker_1.faker.internet.email(),
-    age: faker_1.faker.number.int(),
-    address: {
-        city: faker_1.faker.location.city(),
-        pincode: faker_1.faker.location.zipCode(),
-    },
+    age: faker_1.faker.number.int({ min: 18, max: 80 }),
+    street: faker_1.faker.location.streetAddress(),
+    city: faker_1.faker.location.city(),
+    state: faker_1.faker.location.state(),
+    country: faker_1.faker.location.country(),
+    pincode: faker_1.faker.location.zipCode(),
+    phoneNumber: faker_1.faker.phone.number(),
+    jobTitle: faker_1.faker.person.jobTitle(),
+    companyName: faker_1.faker.company.name(),
+    salary: faker_1.faker.number.int({ min: 30000, max: 150000 }),
+    favoriteColor: faker_1.faker.color.human(),
+    isActive: faker_1.faker.datatype.boolean(),
+    lastLogin: faker_1.faker.date.past(),
+    createdAt: faker_1.faker.date.past(),
 }); };
 // Store generated user data in Redis with "testing:" prefix
 var generateAndSetUsers = function (count) { return __awaiter(void 0, void 0, void 0, function () {
@@ -102,7 +111,6 @@ var measureCommand = function (command) { return __awaiter(void 0, void 0, void 
         }
     });
 }); };
-// Hash commands
 var testHget = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, measureCommand(function () { return redis.hget("testing:user:".concat(userId), "name"); })];
@@ -144,14 +152,34 @@ var testHexists = function (userId) { return __awaiter(void 0, void 0, void 0, f
 // String commands
 var testGet = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        return [2 /*return*/, measureCommand(function () { return redis.get("testing:string_user:".concat(userId)); })];
+        return [2 /*return*/, measureCommand(function () { return __awaiter(void 0, void 0, void 0, function () {
+                var data;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, redis.get("testing:string_user:".concat(userId))];
+                        case 1:
+                            data = _a.sent();
+                            JSON.parse(data); // Parsing the JSON data
+                            return [2 /*return*/];
+                    }
+                });
+            }); })];
     });
 }); };
 var testMget = function (userIds) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        return [2 /*return*/, measureCommand(function () {
-                return redis.mget(userIds.map(function (id) { return "testing:string_user:".concat(id); }));
-            })];
+        return [2 /*return*/, measureCommand(function () { return __awaiter(void 0, void 0, void 0, function () {
+                var data;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, redis.mget(userIds.map(function (id) { return "testing:string_user:".concat(id); }))];
+                        case 1:
+                            data = _a.sent();
+                            data.forEach(function (item) { return JSON.parse(item); }); // Parsing the JSON data
+                            return [2 /*return*/];
+                    }
+                });
+            }); })];
     });
 }); };
 var testSet = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -186,10 +214,8 @@ var testExists = function (userId) { return __awaiter(void 0, void 0, void 0, fu
 }); };
 // HSET command
 var testHset = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
-    var user;
     return __generator(this, function (_a) {
-        user = generateUser();
-        return [2 /*return*/, measureCommand(function () { return redis.hset("testing:user:".concat(userId), user); })];
+        return [2 /*return*/, measureCommand(function () { return redis.hset("testing:user:".concat(userId), "name", "hombalan"); })];
     });
 }); };
 // Cleanup function

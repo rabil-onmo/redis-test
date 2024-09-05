@@ -9,11 +9,20 @@ const generateUser = () => ({
   id: faker.string.uuid(),
   name: faker.internet.userName(),
   email: faker.internet.email(),
-  age: faker.number.int(),
-  address: {
-    city: faker.location.city(),
-    pincode: faker.location.zipCode(),
-  },
+  age: faker.number.int({ min: 18, max: 80 }),
+  street: faker.location.streetAddress(),
+  city: faker.location.city(),
+  state: faker.location.state(),
+  country: faker.location.country(),
+  pincode: faker.location.zipCode(),
+  phoneNumber: faker.phone.number(),
+  jobTitle: faker.person.jobTitle(),
+  companyName: faker.company.name(),
+  salary: faker.number.int({ min: 30000, max: 150000 }),
+  favoriteColor: faker.color.human(),
+  isActive: faker.datatype.boolean(),
+  lastLogin: faker.date.past(),
+  createdAt: faker.date.past(),
 });
 
 // Store generated user data in Redis with "testing:" prefix
@@ -37,7 +46,6 @@ const measureCommand = async (command: () => Promise<any>) => {
   return (end - start).toFixed(3); // Round to 2 decimal places
 };
 
-// Hash commands
 const testHget = async (userId: string) => {
   return measureCommand(() => redis.hget(`testing:user:${userId}`, "name"));
 };
@@ -71,13 +79,19 @@ const testHexists = async (userId: string) => {
 
 // String commands
 const testGet = async (userId: string) => {
-  return measureCommand(() => redis.get(`testing:string_user:${userId}`));
+  return measureCommand(async () => {
+    const data = await redis.get(`testing:string_user:${userId}`);
+    JSON.parse(data!); // Parsing the JSON data
+  });
 };
 
 const testMget = async (userIds: string[]) => {
-  return measureCommand(() =>
-    redis.mget(userIds.map((id) => `testing:string_user:${id}`))
-  );
+  return measureCommand(async () => {
+    const data = await redis.mget(
+      userIds.map((id) => `testing:string_user:${id}`)
+    );
+    data.forEach((item) => JSON.parse(item!)); // Parsing the JSON data
+  });
 };
 
 const testSet = async () => {
@@ -106,8 +120,7 @@ const testExists = async (userId: string) => {
 
 // HSET command
 const testHset = async (userId: string) => {
-  const user = generateUser();
-  return measureCommand(() => redis.hset(`testing:user:${userId}`, user));
+  return measureCommand(() => redis.hset(`testing:user:${userId}`, "name", "hombalan"));
 };
 
 // Cleanup function
