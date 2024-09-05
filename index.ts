@@ -1,8 +1,8 @@
-import Redis from 'ioredis';
-import { performance } from 'perf_hooks';
-import { faker } from '@faker-js/faker';
+import Redis from "ioredis";
+import { performance } from "perf_hooks";
+import { faker } from "@faker-js/faker";
 
-const redis = new Redis('redis://localhost:6379'); // Adjust connection options if needed
+const redis = new Redis("redis://localhost:6379"); // Adjust connection options if needed
 
 // Generate user data
 const generateUser = () => ({
@@ -19,7 +19,7 @@ const generateUser = () => ({
 // Store generated user data in Redis with "testing:" prefix
 const generateAndSetUsers = async (count: number) => {
   const users = Array.from({ length: count }, () => generateUser());
-  const userIds = users.map(user => user.id); // Store generated IDs for later use
+  const userIds = users.map((user) => user.id); // Store generated IDs for later use
 
   for (const user of users) {
     await redis.hmset(`testing:user:${user.id}`, user);
@@ -39,7 +39,7 @@ const measureCommand = async (command: () => Promise<any>) => {
 
 // Hash commands
 const testHget = async (userId: string) => {
-  return measureCommand(() => redis.hget(`testing:user:${userId}`, 'name'));
+  return measureCommand(() => redis.hget(`testing:user:${userId}`, "name"));
 };
 
 const testHgetall = async (userId: string) => {
@@ -47,22 +47,26 @@ const testHgetall = async (userId: string) => {
 };
 
 const testHmget = async (userId: string) => {
-  return measureCommand(() => redis.hmget(`testing:user:${userId}`, ...['name', 'email']));
+  return measureCommand(() =>
+    redis.hmget(`testing:user:${userId}`, ...["name", "email"])
+  );
 };
 
 const testPipelineHmset = async (userIds: string[]) => {
   const pipeline = redis.pipeline();
   const users = Array.from({ length: userIds.length }, () => generateUser());
-  userIds.forEach((id, index) => pipeline.hmset(`testing:user:${id}`, users[index]));
+  userIds.forEach((id, index) =>
+    pipeline.hmset(`testing:user:${id}`, users[index])
+  );
   return measureCommand(() => pipeline.exec());
 };
 
 const testHdel = async (userId: string) => {
-  return measureCommand(() => redis.hdel(`testing:user:${userId}`, 'name'));
+  return measureCommand(() => redis.hdel(`testing:user:${userId}`, "name"));
 };
 
 const testHexists = async (userId: string) => {
-  return measureCommand(() => redis.hexists(`testing:user:${userId}`, 'name'));
+  return measureCommand(() => redis.hexists(`testing:user:${userId}`, "name"));
 };
 
 // String commands
@@ -71,18 +75,24 @@ const testGet = async (userId: string) => {
 };
 
 const testMget = async (userIds: string[]) => {
-  return measureCommand(() => redis.mget(userIds.map(id => `testing:string_user:${id}`)));
+  return measureCommand(() =>
+    redis.mget(userIds.map((id) => `testing:string_user:${id}`))
+  );
 };
 
 const testSet = async () => {
   const user = generateUser();
-  return measureCommand(() => redis.set(`testing:string_user:${user.id}`, JSON.stringify(user)));
+  return measureCommand(() =>
+    redis.set(`testing:string_user:${user.id}`, JSON.stringify(user))
+  );
 };
 
 const testPipelineSet = async (userIds: string[]) => {
   const pipeline = redis.pipeline();
   const users = Array.from({ length: userIds.length }, () => generateUser());
-  userIds.forEach((id, index) => pipeline.set(`testing:string_user:${id}`, JSON.stringify(users[index])));
+  userIds.forEach((id, index) =>
+    pipeline.set(`testing:string_user:${id}`, JSON.stringify(users[index]))
+  );
   return measureCommand(() => pipeline.exec());
 };
 
@@ -100,17 +110,9 @@ const testHset = async (userId: string) => {
   return measureCommand(() => redis.hset(`testing:user:${userId}`, user));
 };
 
-// HMSET command
-const testHmset = async (userIds: string[]) => {
-  const pipeline = redis.pipeline();
-  const users = Array.from({ length: userIds.length }, () => generateUser());
-  userIds.forEach((id, index) => pipeline.hmset(`testing:user:${id}`, users[index]));
-  return measureCommand(() => pipeline.exec());
-};
-
 // Cleanup function
 const cleanupKeys = async () => {
-  const keys = await redis.keys('testing:*'); // Get all keys with "testing:" prefix
+  const keys = await redis.keys("testing:*"); // Get all keys with "testing:" prefix
   if (keys.length > 0) {
     await redis.del(keys); // Delete all keys
   }
@@ -125,71 +127,71 @@ const runPerformanceTests = async () => {
   const results = {};
 
   // Test HGET
-  results['HGET'] = await testHget(userIds[0]);
+  results["HGET"] = await testHget(userIds[0]);
 
   // Test HGETALL
-  results['HGETALL'] = await testHgetall(userIds[1]);
+  results["HGETALL"] = await testHgetall(userIds[1]);
 
   // Test HMGET
-  results['HMGET'] = await testHmget(userIds[2]);
+  results["HMGET"] = await testHmget(userIds[2]);
 
   // Test PIPELINE HMSET
-  results['PIPELINE HMSET'] = await testPipelineHmset(userIds);
+  results["PIPELINE HMSET"] = await testPipelineHmset(userIds);
 
   // Test HDEL
-  results['HDEL'] = await testHdel(userIds[1]);
+  results["HDEL"] = await testHdel(userIds[1]);
 
   // Test HEXISTS
-  results['HEXISTS'] = await testHexists(userIds[2]);
+  results["HEXISTS"] = await testHexists(userIds[2]);
 
   // Test GET
-  results['GET'] = await testGet(userIds[0]);
+  results["GET"] = await testGet(userIds[0]);
 
   // Test MGET
-  results['MGET'] = await testMget(userIds);
+  results["MGET"] = await testMget(userIds);
 
   // Test SET
-  results['SET'] = await testSet();
+  results["SET"] = await testSet();
 
   // Test PIPELINE SET
-  results['PIPELINE SET'] = await testPipelineSet(userIds);
+  results["PIPELINE SET"] = await testPipelineSet(userIds);
 
   // Test DEL
-  results['DEL'] = await testDel(userIds[1]);
+  results["DEL"] = await testDel(userIds[1]);
 
   // Test EXISTS
-  results['EXISTS'] = await testExists(userIds[2]);
+  results["EXISTS"] = await testExists(userIds[2]);
 
   // Test HSET
-  results['HSET'] = await testHset(userIds[0]);
-
-  // Test HMSET
-  results['HMSET'] = await testHmset(userIds);
+  results["HSET"] = await testHset(userIds[0]);
 
   // Cleanup keys
   await cleanupKeys();
 
   // Output results with units (milliseconds)
   console.table({
-    'HGET': `${results['HGET']} ms`,
-    'GET': `${results['GET']} ms`,
+    HGET: `${results["HGET"]} ms`,
+    GET: `${results["GET"]} ms`,
 
-    'HGETALL': `${results['HGETALL']} ms`,
-    'HMGET': `${results['HMGET']} ms`,
-    'MGET': `${results['MGET']} ms`,
-    
-    'HSET': `${results['HSET']} ms`,
-    'HMSET': `${results['HMSET']} ms`,
-    'SET': `${results['SET']} ms`,
-    'PIPELINE SET': `${results['PIPELINE SET']} ms`,
-    'PIPELINE HMSET': `${results['PIPELINE HMSET']} ms`,
-    'HEXISTS': `${results['HEXISTS']} ms`,
-    
-    'HDEL': `${results['HDEL']} ms`,
-    'DEL': `${results['DEL']} ms`,
-    'EXISTS': `${results['EXISTS']} ms`,
+    HGETALL: `${results["HGETALL"]} ms`,
+    HMGET: `${results["HMGET"]} ms`,
+    MGET: `${results["MGET"]} ms`,
+
+    HSET: `${results["HSET"]} ms`,
+    SET: `${results["SET"]} ms`,
+    "PIPELINE SET": `${results["PIPELINE SET"]} ms`,
+    "PIPELINE HMSET": `${results["PIPELINE HMSET"]} ms`,
+    HEXISTS: `${results["HEXISTS"]} ms`,
+
+    HDEL: `${results["HDEL"]} ms`,
+    DEL: `${results["DEL"]} ms`,
+    EXISTS: `${results["EXISTS"]} ms`,
   });
 };
 
-runPerformanceTests().catch(console.error);
-
+runPerformanceTests()
+  .then(() => {
+    console.log("COMPLETED");
+    process.exit(0);
+  })
+  .catch(console.error);
