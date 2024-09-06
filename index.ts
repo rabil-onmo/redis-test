@@ -46,6 +46,7 @@ const measureCommand = async (command: () => Promise<any>) => {
   return (end - start).toFixed(3); // Round to 2 decimal places
 };
 
+// Hash commands
 const testHget = async (userId: string) => {
   return measureCommand(() => redis.hget(`testing:user:${userId}`, "name"));
 };
@@ -120,7 +121,40 @@ const testExists = async (userId: string) => {
 
 // HSET command
 const testHset = async (userId: string) => {
-  return measureCommand(() => redis.hset(`testing:user:${userId}`, "name", "hombalan"));
+  return measureCommand(() =>
+    redis.hset(`testing:user:${userId}`, "name", "hombalan")
+  );
+};
+
+// JSON commands
+const testJsonSet = async (userId: string) => {
+  const user = generateUser();
+  return measureCommand(() =>
+    redis.call(
+      "JSON.SET",
+      `testing:json_user:${userId}`,
+      "$",
+      JSON.stringify(user)
+    )
+  );
+};
+
+const testJsonGet = async (userId: string) => {
+  return measureCommand(async () =>
+    redis.call("JSON.GET", `testing:json_user:${userId}`, ".name")
+  );
+};
+
+const testJsonDel = async (userId: string) => {
+  return measureCommand(() =>
+    redis.call("JSON.DEL", `testing:json_user:${userId}`)
+  );
+};
+
+const testJsonExists = async (userId: string) => {
+  return measureCommand(() =>
+    redis.call("JSON.OBJKEYS", `testing:json_user:${userId}`)
+  );
 };
 
 // Cleanup function
@@ -139,41 +173,26 @@ const runPerformanceTests = async () => {
   // Run tests sequentially
   const results = {};
 
-  // Test HGET
+  // Test Hash commands
   results["HGET"] = await testHget(userIds[0]);
-
-  // Test HGETALL
   results["HGETALL"] = await testHgetall(userIds[1]);
-
-  // Test HMGET
   results["HMGET"] = await testHmget(userIds[2]);
-
-  // Test PIPELINE HMSET
   results["PIPELINE HMSET"] = await testPipelineHmset(userIds);
-
-  // Test HDEL
   results["HDEL"] = await testHdel(userIds[1]);
-
-  // Test HEXISTS
   results["HEXISTS"] = await testHexists(userIds[2]);
 
-  // Test GET
   results["GET"] = await testGet(userIds[0]);
-
-  // Test MGET
   results["MGET"] = await testMget(userIds);
-
-  // Test SET
   results["SET"] = await testSet();
-
-  // Test PIPELINE SET
   results["PIPELINE SET"] = await testPipelineSet(userIds);
-
-  // Test DEL
   results["DEL"] = await testDel(userIds[1]);
-
-  // Test EXISTS
   results["EXISTS"] = await testExists(userIds[2]);
+
+  // Test JSON commands
+  results["JSON SET"] = await testJsonSet(userIds[0]);
+  results["JSON GET"] = await testJsonGet(userIds[0]);
+  results["JSON DEL"] = await testJsonDel(userIds[0]);
+  results["JSON EXISTS"] = await testJsonExists(userIds[0]);
 
   // Test HSET
   results["HSET"] = await testHset(userIds[0]);
@@ -199,6 +218,11 @@ const runPerformanceTests = async () => {
     HDEL: `${results["HDEL"]} ms`,
     DEL: `${results["DEL"]} ms`,
     EXISTS: `${results["EXISTS"]} ms`,
+
+    "JSON SET": `${results["JSON SET"]} ms`,
+    "JSON GET": `${results["JSON GET"]} ms`,
+    "JSON DEL": `${results["JSON DEL"]} ms`,
+    "JSON EXISTS": `${results["JSON EXISTS"]} ms`,
   });
 };
 
