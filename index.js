@@ -48,51 +48,92 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ioredis_1 = require("ioredis");
 var perf_hooks_1 = require("perf_hooks");
 var faker_1 = require("@faker-js/faker");
-var redis = new ioredis_1.default("redis://localhost:6379"); // Adjust connection options if needed
+var redis = new ioredis_1.default("redis://localhost:26379"); // Adjust connection options if needed
+// Run tests sequentially
+var results = {};
 // Generate user data
-var generateUser = function () { return ({
-    id: faker_1.faker.string.uuid(),
-    name: faker_1.faker.internet.userName(),
-    email: faker_1.faker.internet.email(),
-    age: faker_1.faker.number.int({ min: 18, max: 80 }),
-    street: faker_1.faker.location.streetAddress(),
-    city: faker_1.faker.location.city(),
-    state: faker_1.faker.location.state(),
-    country: faker_1.faker.location.country(),
-    pincode: faker_1.faker.location.zipCode(),
-    phoneNumber: faker_1.faker.phone.number(),
-    jobTitle: faker_1.faker.person.jobTitle(),
-    companyName: faker_1.faker.company.name(),
-    salary: faker_1.faker.number.int({ min: 30000, max: 150000 }),
-    favoriteColor: faker_1.faker.color.human(),
-    isActive: faker_1.faker.datatype.boolean(),
-    lastLogin: faker_1.faker.date.past(),
-    createdAt: faker_1.faker.date.past(),
-}); };
+var generateUser = function () {
+    var user = {
+        id: faker_1.faker.string.uuid(),
+        name: faker_1.faker.internet.userName(),
+        email: faker_1.faker.internet.email(),
+        age: faker_1.faker.number.int({ min: 18, max: 80 }),
+        addressStreet: faker_1.faker.location.streetAddress(),
+        addressCity: faker_1.faker.location.city(),
+        addressState: faker_1.faker.location.state(),
+        addressCountry: faker_1.faker.location.country(),
+        addressPincode: faker_1.faker.location.zipCode(),
+        phoneNumberMobile: faker_1.faker.phone.number(),
+        phoneNumberHome: faker_1.faker.phone.number(),
+        phoneNumberWork: faker_1.faker.phone.number(),
+        jobTitle: faker_1.faker.person.jobTitle(),
+        companyName: faker_1.faker.company.name(),
+        companyAddressStreet: faker_1.faker.location.streetAddress(),
+        companyAddressCity: faker_1.faker.location.city(),
+        companyAddressState: faker_1.faker.location.state(),
+        companyAddressCountry: faker_1.faker.location.country(),
+        companyAddressPincode: faker_1.faker.location.zipCode(),
+        companyContactEmail: faker_1.faker.internet.email(),
+        companyContactPhone: faker_1.faker.phone.number(),
+        salary: faker_1.faker.number.int({ min: 30000, max: 150000 }),
+        preferenceTheme: faker_1.faker.color.human(),
+        preferenceLanguage: faker_1.faker.lorem.word(),
+        preferenceNotificationEmail: faker_1.faker.datatype.boolean(),
+        preferenceNotificationSms: faker_1.faker.datatype.boolean(),
+        preferenceNotificationPush: faker_1.faker.datatype.boolean(),
+        favoriteColor: faker_1.faker.color.human(),
+        isActive: faker_1.faker.datatype.boolean(),
+        lastLogin: faker_1.faker.date.past(),
+        createdAt: faker_1.faker.date.past(),
+    };
+    // Add history as separate flat fields
+    Array.from({ length: 50 }).forEach(function (_, i) {
+        user["historyLoginTimestamp_".concat(i)] = faker_1.faker.date.past();
+        user["historyActivity_".concat(i)] = faker_1.faker.lorem.sentence();
+    });
+    // Add extensiveData as separate flat fields
+    Array.from({ length: 100 }).forEach(function (_, i) {
+        user["extensiveDataId_".concat(i)] = faker_1.faker.string.uuid();
+        user["extensiveDataDescription_".concat(i)] = faker_1.faker.lorem.paragraph();
+        user["extensiveDataTimestamp_".concat(i)] = faker_1.faker.date.past();
+        Array.from({ length: 5 }).forEach(function (_, j) {
+            user["extensiveDataMetaTags_".concat(i, "_").concat(j)] = faker_1.faker.lorem.word();
+        });
+        user["extensiveDataMetaDetailsKey1_".concat(i)] = faker_1.faker.lorem.word();
+        user["extensiveDataMetaDetailsKey2_".concat(i)] = faker_1.faker.lorem.word();
+        user["extensiveDataMetaDetailsKey3_".concat(i)] = faker_1.faker.lorem.word();
+        user["extensiveDataMetaDetailsKey4_".concat(i)] = faker_1.faker.lorem.word();
+        user["extensiveDataMetaDetailsKey5_".concat(i)] = faker_1.faker.lorem.word();
+    });
+    return user;
+};
 // Store generated user data in Redis with "testing:" prefix
 var generateAndSetUsers = function (count) { return __awaiter(void 0, void 0, void 0, function () {
-    var users, userIds, _i, users_1, user;
+    var users, userIds;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 users = Array.from({ length: count }, function () { return generateUser(); });
                 userIds = users.map(function (user) { return user.id; });
-                _i = 0, users_1 = users;
-                _a.label = 1;
+                return [4 /*yield*/, Promise.all(users.map(function (user) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0: return [4 /*yield*/, redis.hmset("testing:user:".concat(user.id), user)];
+                                case 1:
+                                    _a.sent();
+                                    return [4 /*yield*/, redis.set("testing:string_user:".concat(user.id), JSON.stringify(user))];
+                                case 2:
+                                    _a.sent();
+                                    return [4 /*yield*/, redis.call("JSON.SET", "testing:json_user:".concat(user.id), "$", JSON.stringify(user))];
+                                case 3:
+                                    _a.sent();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); }))];
             case 1:
-                if (!(_i < users_1.length)) return [3 /*break*/, 5];
-                user = users_1[_i];
-                return [4 /*yield*/, redis.hmset("testing:user:".concat(user.id), user)];
-            case 2:
                 _a.sent();
-                return [4 /*yield*/, redis.set("testing:string_user:".concat(user.id), JSON.stringify(user))];
-            case 3:
-                _a.sent();
-                _a.label = 4;
-            case 4:
-                _i++;
-                return [3 /*break*/, 1];
-            case 5: return [2 /*return*/, userIds];
+                return [2 /*return*/, userIds];
         }
     });
 }); };
@@ -148,6 +189,13 @@ var testHdel = function (userId) { return __awaiter(void 0, void 0, void 0, func
 var testHexists = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, measureCommand(function () { return redis.hexists("testing:user:".concat(userId), "name"); })];
+    });
+}); };
+var testHmset = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var user;
+    return __generator(this, function (_a) {
+        user = generateUser();
+        return [2 /*return*/, measureCommand(function () { return redis.hmset("testing:user:".concat(user.id), user); })];
     });
 }); };
 // String commands
@@ -231,6 +279,17 @@ var testJsonSet = function (userId) { return __awaiter(void 0, void 0, void 0, f
             })];
     });
 }); };
+var testPipelineJsonset = function (userIds) { return __awaiter(void 0, void 0, void 0, function () {
+    var pipeline, users;
+    return __generator(this, function (_a) {
+        pipeline = redis.pipeline();
+        users = Array.from({ length: userIds.length }, function () { return generateUser(); });
+        userIds.forEach(function (id, index) {
+            return pipeline.call("JSON.SET", "testing:json_user:".concat(id), "$", JSON.stringify(users[index]));
+        });
+        return [2 /*return*/, measureCommand(function () { return pipeline.exec(); })];
+    });
+}); };
 var testJsonGet = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, measureCommand(function () { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
@@ -271,120 +330,130 @@ var cleanupKeys = function () { return __awaiter(void 0, void 0, void 0, functio
 }); };
 // Main function
 var runPerformanceTests = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var userIds, results, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9;
-    return __generator(this, function (_10) {
-        switch (_10.label) {
-            case 0: return [4 /*yield*/, generateAndSetUsers(3)];
+    var userIds, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13;
+    return __generator(this, function (_14) {
+        switch (_14.label) {
+            case 0: return [4 /*yield*/, generateAndSetUsers(1000)];
             case 1:
-                userIds = _10.sent();
-                results = {};
+                userIds = _14.sent();
                 // Test Hash commands
                 _a = results;
                 _b = "HGET";
                 return [4 /*yield*/, testHget(userIds[0])];
             case 2:
                 // Test Hash commands
-                _a[_b] = _10.sent();
+                _a[_b] = _14.sent();
                 _c = results;
                 _d = "HGETALL";
                 return [4 /*yield*/, testHgetall(userIds[1])];
             case 3:
-                _c[_d] = _10.sent();
+                _c[_d] = _14.sent();
                 _e = results;
                 _f = "HMGET";
                 return [4 /*yield*/, testHmget(userIds[2])];
             case 4:
-                _e[_f] = _10.sent();
+                _e[_f] = _14.sent();
                 _g = results;
-                _h = "PIPELINE HMSET";
-                return [4 /*yield*/, testPipelineHmset(userIds)];
+                _h = "HMSET";
+                return [4 /*yield*/, testHmset()];
             case 5:
-                _g[_h] = _10.sent();
+                _g[_h] = _14.sent();
                 _j = results;
-                _k = "HDEL";
-                return [4 /*yield*/, testHdel(userIds[1])];
+                _k = "PIPELINE HMSET";
+                return [4 /*yield*/, testPipelineHmset(userIds.slice(0, 10))];
             case 6:
-                _j[_k] = _10.sent();
+                _j[_k] = _14.sent();
                 _l = results;
-                _m = "HEXISTS";
-                return [4 /*yield*/, testHexists(userIds[2])];
+                _m = "HDEL";
+                return [4 /*yield*/, testHdel(userIds[1])];
             case 7:
-                _l[_m] = _10.sent();
+                _l[_m] = _14.sent();
                 _o = results;
-                _p = "GET";
-                return [4 /*yield*/, testGet(userIds[0])];
+                _p = "HEXISTS";
+                return [4 /*yield*/, testHexists(userIds[2])];
             case 8:
-                _o[_p] = _10.sent();
+                _o[_p] = _14.sent();
                 _q = results;
-                _r = "MGET";
-                return [4 /*yield*/, testMget(userIds)];
+                _r = "GET";
+                return [4 /*yield*/, testGet(userIds[0])];
             case 9:
-                _q[_r] = _10.sent();
+                _q[_r] = _14.sent();
                 _s = results;
-                _t = "SET";
-                return [4 /*yield*/, testSet()];
+                _t = "MGET";
+                return [4 /*yield*/, testMget(userIds.slice(0, 10))];
             case 10:
-                _s[_t] = _10.sent();
+                _s[_t] = _14.sent();
                 _u = results;
-                _v = "PIPELINE SET";
-                return [4 /*yield*/, testPipelineSet(userIds)];
+                _v = "SET";
+                return [4 /*yield*/, testSet()];
             case 11:
-                _u[_v] = _10.sent();
+                _u[_v] = _14.sent();
                 _w = results;
-                _x = "DEL";
-                return [4 /*yield*/, testDel(userIds[1])];
+                _x = "PIPELINE SET";
+                return [4 /*yield*/, testPipelineSet(userIds.slice(0, 10))];
             case 12:
-                _w[_x] = _10.sent();
+                _w[_x] = _14.sent();
                 _y = results;
-                _z = "EXISTS";
-                return [4 /*yield*/, testExists(userIds[2])];
+                _z = "DEL";
+                return [4 /*yield*/, testDel(userIds[1])];
             case 13:
-                _y[_z] = _10.sent();
-                // Test JSON commands
+                _y[_z] = _14.sent();
                 _0 = results;
-                _1 = "JSON SET";
-                return [4 /*yield*/, testJsonSet(userIds[0])];
+                _1 = "EXISTS";
+                return [4 /*yield*/, testExists(userIds[2])];
             case 14:
+                _0[_1] = _14.sent();
                 // Test JSON commands
-                _0[_1] = _10.sent();
                 _2 = results;
-                _3 = "JSON GET";
-                return [4 /*yield*/, testJsonGet(userIds[0])];
+                _3 = "JSON SET";
+                return [4 /*yield*/, testJsonSet(userIds[0])];
             case 15:
-                _2[_3] = _10.sent();
+                // Test JSON commands
+                _2[_3] = _14.sent();
                 _4 = results;
-                _5 = "JSON DEL";
-                return [4 /*yield*/, testJsonDel(userIds[0])];
+                _5 = "JSON GET";
+                return [4 /*yield*/, testJsonGet(userIds[0])];
             case 16:
-                _4[_5] = _10.sent();
+                _4[_5] = _14.sent();
                 _6 = results;
-                _7 = "JSON EXISTS";
-                return [4 /*yield*/, testJsonExists(userIds[0])];
+                _7 = "JSON DEL";
+                return [4 /*yield*/, testJsonDel(userIds[0])];
             case 17:
-                _6[_7] = _10.sent();
-                // Test HSET
+                _6[_7] = _14.sent();
                 _8 = results;
-                _9 = "HSET";
-                return [4 /*yield*/, testHset(userIds[0])];
+                _9 = "JSON EXISTS";
+                return [4 /*yield*/, testJsonExists(userIds[0])];
             case 18:
+                _8[_9] = _14.sent();
+                _10 = results;
+                _11 = "JSON PIPELINE SET";
+                return [4 /*yield*/, testPipelineJsonset(userIds.slice(0, 10))];
+            case 19:
+                _10[_11] = _14.sent();
                 // Test HSET
-                _8[_9] = _10.sent();
+                _12 = results;
+                _13 = "HSET";
+                return [4 /*yield*/, testHset(userIds[0])];
+            case 20:
+                // Test HSET
+                _12[_13] = _14.sent();
                 // Cleanup keys
                 return [4 /*yield*/, cleanupKeys()];
-            case 19:
+            case 21:
                 // Cleanup keys
-                _10.sent();
+                _14.sent();
                 // Output results with units (milliseconds)
                 console.table({
                     HGET: "".concat(results["HGET"], " ms"),
                     GET: "".concat(results["GET"], " ms"),
                     HGETALL: "".concat(results["HGETALL"], " ms"),
                     HMGET: "".concat(results["HMGET"], " ms"),
-                    MGET: "".concat(results["MGET"], " ms"),
+                    "MGET (10)": "".concat(results["MGET"], " ms"),
                     HSET: "".concat(results["HSET"], " ms"),
+                    HMSET: "".concat(results["HMSET"], " ms"),
                     SET: "".concat(results["SET"], " ms"),
-                    "PIPELINE SET": "".concat(results["PIPELINE SET"], " ms"),
-                    "PIPELINE HMSET": "".concat(results["PIPELINE HMSET"], " ms"),
+                    "PIPELINE SET (10)": "".concat(results["PIPELINE SET"], " ms"),
+                    "PIPELINE HMSET (10)": "".concat(results["PIPELINE HMSET"], " ms"),
                     HEXISTS: "".concat(results["HEXISTS"], " ms"),
                     HDEL: "".concat(results["HDEL"], " ms"),
                     DEL: "".concat(results["DEL"], " ms"),
@@ -393,6 +462,7 @@ var runPerformanceTests = function () { return __awaiter(void 0, void 0, void 0,
                     "JSON GET": "".concat(results["JSON GET"], " ms"),
                     "JSON DEL": "".concat(results["JSON DEL"], " ms"),
                     "JSON EXISTS": "".concat(results["JSON EXISTS"], " ms"),
+                    "PIPELINE JSON.SET (10)": "".concat(results["JSON PIPELINE SET"], " ms"),
                 });
                 return [2 /*return*/];
         }
