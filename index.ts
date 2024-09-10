@@ -208,6 +208,14 @@ const testPipelineJsonset = async (userIds: string[]) => {
   return measureCommand(() => pipeline.exec());
 };
 
+const testPipelineHgetall = async (userIds: string[]) => {
+  const pipeline = redis.pipeline();
+  userIds.forEach((userId) =>
+    pipeline.hgetall(`testing:user:${userId}`)
+  );
+  return measureCommand(() => pipeline.exec());
+};
+
 const testJsonGet = async (userId: string) => {
   return measureCommand(async () =>
     redis.call("JSON.GET", `testing:json_user:${userId}`, ".name")
@@ -263,6 +271,9 @@ const runPerformanceTests = async () => {
   results["JSON PIPELINE SET"] = await testPipelineJsonset(
     userIds.slice(0, 10)
   );
+  results["HGETALL PIPELINE SET"] = await testPipelineHgetall(
+    userIds.slice(0, 10)
+  );
 
   // Test HSET
   results["HSET"] = await testHset(userIds[0]);
@@ -284,6 +295,7 @@ const runPerformanceTests = async () => {
     SET: `${results["SET"]} ms`,
     "PIPELINE SET (10)": `${results["PIPELINE SET"]} ms`,
     "PIPELINE HMSET (10)": `${results["PIPELINE HMSET"]} ms`,
+    "PIPELINE HGETALL (10)": `${results["HGETALL PIPELINE SET"]} ms`,
     HEXISTS: `${results["HEXISTS"]} ms`,
     
     HDEL: `${results["HDEL"]} ms`,

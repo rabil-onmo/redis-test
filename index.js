@@ -290,6 +290,16 @@ var testPipelineJsonset = function (userIds) { return __awaiter(void 0, void 0, 
         return [2 /*return*/, measureCommand(function () { return pipeline.exec(); })];
     });
 }); };
+var testPipelineHgetall = function (userIds) { return __awaiter(void 0, void 0, void 0, function () {
+    var pipeline;
+    return __generator(this, function (_a) {
+        pipeline = redis.pipeline();
+        userIds.forEach(function (userId) {
+            return pipeline.hgetall("testing:user:".concat(userId));
+        });
+        return [2 /*return*/, measureCommand(function () { return pipeline.exec(); })];
+    });
+}); };
 var testJsonGet = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, measureCommand(function () { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
@@ -330,118 +340,123 @@ var cleanupKeys = function () { return __awaiter(void 0, void 0, void 0, functio
 }); };
 // Main function
 var runPerformanceTests = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var userIds, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13;
-    return __generator(this, function (_14) {
-        switch (_14.label) {
+    var userIds, _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15;
+    return __generator(this, function (_16) {
+        switch (_16.label) {
             case 0: return [4 /*yield*/, generateAndSetUsers(1000)];
             case 1:
-                userIds = _14.sent();
+                userIds = _16.sent();
                 // Test Hash commands
                 _a = results;
                 _b = "HGET";
                 return [4 /*yield*/, testHget(userIds[0])];
             case 2:
                 // Test Hash commands
-                _a[_b] = _14.sent();
+                _a[_b] = _16.sent();
                 _c = results;
                 _d = "HGETALL";
                 return [4 /*yield*/, testHgetall(userIds[1])];
             case 3:
-                _c[_d] = _14.sent();
+                _c[_d] = _16.sent();
                 _e = results;
                 _f = "HMGET";
                 return [4 /*yield*/, testHmget(userIds[2])];
             case 4:
-                _e[_f] = _14.sent();
+                _e[_f] = _16.sent();
                 _g = results;
                 _h = "HMSET";
                 return [4 /*yield*/, testHmset()];
             case 5:
-                _g[_h] = _14.sent();
+                _g[_h] = _16.sent();
                 _j = results;
                 _k = "PIPELINE HMSET";
                 return [4 /*yield*/, testPipelineHmset(userIds.slice(0, 10))];
             case 6:
-                _j[_k] = _14.sent();
+                _j[_k] = _16.sent();
                 _l = results;
                 _m = "HDEL";
                 return [4 /*yield*/, testHdel(userIds[1])];
             case 7:
-                _l[_m] = _14.sent();
+                _l[_m] = _16.sent();
                 _o = results;
                 _p = "HEXISTS";
                 return [4 /*yield*/, testHexists(userIds[2])];
             case 8:
-                _o[_p] = _14.sent();
+                _o[_p] = _16.sent();
                 _q = results;
                 _r = "GET";
                 return [4 /*yield*/, testGet(userIds[0])];
             case 9:
-                _q[_r] = _14.sent();
+                _q[_r] = _16.sent();
                 _s = results;
                 _t = "MGET";
                 return [4 /*yield*/, testMget(userIds.slice(0, 10))];
             case 10:
-                _s[_t] = _14.sent();
+                _s[_t] = _16.sent();
                 _u = results;
                 _v = "SET";
                 return [4 /*yield*/, testSet()];
             case 11:
-                _u[_v] = _14.sent();
+                _u[_v] = _16.sent();
                 _w = results;
                 _x = "PIPELINE SET";
                 return [4 /*yield*/, testPipelineSet(userIds.slice(0, 10))];
             case 12:
-                _w[_x] = _14.sent();
+                _w[_x] = _16.sent();
                 _y = results;
                 _z = "DEL";
                 return [4 /*yield*/, testDel(userIds[1])];
             case 13:
-                _y[_z] = _14.sent();
+                _y[_z] = _16.sent();
                 _0 = results;
                 _1 = "EXISTS";
                 return [4 /*yield*/, testExists(userIds[2])];
             case 14:
-                _0[_1] = _14.sent();
+                _0[_1] = _16.sent();
                 // Test JSON commands
                 _2 = results;
                 _3 = "JSON SET";
                 return [4 /*yield*/, testJsonSet(userIds[0])];
             case 15:
                 // Test JSON commands
-                _2[_3] = _14.sent();
+                _2[_3] = _16.sent();
                 _4 = results;
                 _5 = "JSON GET";
                 return [4 /*yield*/, testJsonGet(userIds[0])];
             case 16:
-                _4[_5] = _14.sent();
+                _4[_5] = _16.sent();
                 _6 = results;
                 _7 = "JSON DEL";
                 return [4 /*yield*/, testJsonDel(userIds[0])];
             case 17:
-                _6[_7] = _14.sent();
+                _6[_7] = _16.sent();
                 _8 = results;
                 _9 = "JSON EXISTS";
                 return [4 /*yield*/, testJsonExists(userIds[0])];
             case 18:
-                _8[_9] = _14.sent();
+                _8[_9] = _16.sent();
                 _10 = results;
                 _11 = "JSON PIPELINE SET";
                 return [4 /*yield*/, testPipelineJsonset(userIds.slice(0, 10))];
             case 19:
-                _10[_11] = _14.sent();
-                // Test HSET
+                _10[_11] = _16.sent();
                 _12 = results;
-                _13 = "HSET";
-                return [4 /*yield*/, testHset(userIds[0])];
+                _13 = "HGETALL PIPELINE SET";
+                return [4 /*yield*/, testPipelineHgetall(userIds.slice(0, 10))];
             case 20:
+                _12[_13] = _16.sent();
                 // Test HSET
-                _12[_13] = _14.sent();
+                _14 = results;
+                _15 = "HSET";
+                return [4 /*yield*/, testHset(userIds[0])];
+            case 21:
+                // Test HSET
+                _14[_15] = _16.sent();
                 // Cleanup keys
                 return [4 /*yield*/, cleanupKeys()];
-            case 21:
+            case 22:
                 // Cleanup keys
-                _14.sent();
+                _16.sent();
                 // Output results with units (milliseconds)
                 console.table({
                     HGET: "".concat(results["HGET"], " ms"),
@@ -454,6 +469,7 @@ var runPerformanceTests = function () { return __awaiter(void 0, void 0, void 0,
                     SET: "".concat(results["SET"], " ms"),
                     "PIPELINE SET (10)": "".concat(results["PIPELINE SET"], " ms"),
                     "PIPELINE HMSET (10)": "".concat(results["PIPELINE HMSET"], " ms"),
+                    "PIPELINE HGETALL (10)": "".concat(results["HGETALL PIPELINE SET"], " ms"),
                     HEXISTS: "".concat(results["HEXISTS"], " ms"),
                     HDEL: "".concat(results["HDEL"], " ms"),
                     DEL: "".concat(results["DEL"], " ms"),
